@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book Library</title>
+<style>
+:root{--bg:#f6f3ee;--panel:#fff;--ink:#1c1b19;--muted:#6a665f;--line:#ddd7cc;--accent:#1f5f5b;--on-accent:#fff;box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root{--bg:#161a19;--panel:#1f2524;--ink:#ecebe7;--muted:#a09c93;--line:#334040;--accent:#6fd0c8;--on-accent:#07201e}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Georgia,"Times New Roman",serif}
+header{background:var(--accent);color:var(--on-accent);padding:20px 16px}
+header h1{margin:0 auto;font-size:1.5rem;max-width:960px}
+header a{color:inherit;text-decoration:none}
+main{max-width:960px;margin:0 auto;padding:24px 16px}
+input[type=search]{width:100%;max-width:360px;padding:10px 12px;font:1rem system-ui,sans-serif;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);margin:6px 0 20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:20px;list-style:none;margin:0;padding:0}
+.card{display:block;text-decoration:none;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;transition:transform .15s}
+.card:hover,.card:focus-visible{transform:translateY(-3px);outline:2px solid var(--accent)}
+.cover{display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;padding:16px;font-weight:700;line-height:1.2;aspect-ratio:2/3}
+.card .cover{font-size:1.15rem}
+.meta{padding:12px}
+.meta strong{display:block}
+.meta span{color:var(--muted);font:.9rem system-ui,sans-serif}
+.detail{display:grid;grid-template-columns:240px 1fr;gap:28px;align-items:start}
+.detail .cover{font-size:1.6rem;border-radius:10px}
+.detail h2{margin:0 0 4px;font-size:1.9rem}
+.by{color:var(--muted);margin:0 0 16px}
+table{border-collapse:collapse;margin:16px 0;font-family:system-ui,sans-serif}
+th,td{text-align:left;padding:8px 20px 8px 0;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600}
+.back{display:inline-block;margin-bottom:16px;color:var(--accent);font:600 1rem system-ui,sans-serif;text-decoration:none}
+.none{color:var(--muted);font-family:system-ui,sans-serif}
+@media (max-width:600px){.detail{grid-template-columns:1fr}.detail .cover{max-width:220px}}
+</style>
+</head>
+<body>
+<header><h1><a href="#/">📚 Book Library</a></h1></header>
+<main id="app"></main>
+
+<script>
+const BOOKS = [
+  { id: 1, title: "Pride and Prejudice", author: "Jane Austen", year: 1813, genre: "Classic Romance", pages: 432, color: "#8c4a5e",
+    description: "Elizabeth Bennet navigates family pressure, social class and first impressions in Regency England. Her sharp wit and her evolving relationship with the proud Mr. Darcy drive this witty comedy of manners." },
+  { id: 2, title: "1984", author: "George Orwell", year: 1949, genre: "Dystopian Fiction", pages: 328, color: "#3d4f5c",
+    description: "Winston Smith lives under constant surveillance in a totalitarian state ruled by Big Brother. His quiet rebellion explores truth, language and the power of propaganda." },
+  { id: 3, title: "The Hobbit", author: "J.R.R. Tolkien", year: 1937, genre: "Fantasy", pages: 310, color: "#4d7a4a",
+    description: "Bilbo Baggins, a comfort-loving hobbit, is swept into a quest with a company of dwarves to reclaim a treasure guarded by the dragon Smaug." },
+  { id: 4, title: "To Kill a Mockingbird", author: "Harper Lee", year: 1960, genre: "Southern Gothic", pages: 281, color: "#b0792f",
+    description: "Told through young Scout Finch, the story follows her father, lawyer Atticus Finch, as he defends a Black man falsely accused of a crime in the American South." },
+  { id: 5, title: "The Alchemist", author: "Paulo Coelho", year: 1988, genre: "Adventure Fiction", pages: 208, color: "#c2662d",
+    description: "Santiago, an Andalusian shepherd boy, travels toward the Egyptian pyramids in search of treasure and learns to listen to his heart along the way." },
+  { id: 6, title: "Wings of Fire", author: "A. P. J. Abdul Kalam", year: 1999, genre: "Autobiography", pages: 180, color: "#2b5f8a",
+    description: "The autobiography of India's former President, tracing his path from a modest childhood in Rameswaram to leading the country's space and missile programmes." }
+];
+// Page counts are approximate and vary by edition.
+
+const app = document.getElementById('app');
+
+function el(tag, props, children) {
+  const n = document.createElement(tag);
+  Object.assign(n, props || {});
+  (children || []).forEach(function (c) { n.append(c); });
+  return n;
+}
+
+/* ---------- Home page: list of books ---------- */
+function showHome() {
+  document.title = 'Book Library';
+  app.innerHTML = '';
+
+  const search = el('input', { type: 'search', id: 'q', placeholder: 'Search books...' });
+  const list = el('ul', { className: 'grid' });
+  const empty = el('p', { className: 'none', textContent: 'No books match your search.', hidden: true });
+
+  function render(items) {
+    list.innerHTML = '';
+    items.forEach(function (b) {
+      const cover = el('div', { className: 'cover', textContent: b.title });
+      cover.style.background = b.color;
+      const meta = el('div', { className: 'meta' }, [
+        el('strong', { textContent: b.title }),
+        el('span', { textContent: b.author })
+      ]);
+      const card = el('a', { className: 'card', href: '#/book/' + b.id }, [cover, meta]);
+      list.appendChild(el('li', {}, [card]));
+    });
+    empty.hidden = items.length > 0;
+  }
+
+  search.addEventListener('input', function () {
+    const t = search.value.toLowerCase().trim();
+    render(BOOKS.filter(function (b) {
+      return b.title.toLowerCase().includes(t) || b.author.toLowerCase().includes(t);
+    }));
+  });
+
+  app.append(
+    el('label', { htmlFor: 'q', className: 'none', textContent: 'Search by title or author' }),
+    el('br'), search, list, empty
+  );
+  render(BOOKS);
+}
+
+/* ---------- Details page for one book ---------- */
+function showBook(id) {
+  const book = BOOKS.find(function (b) { return b.id === id; });
+  app.innerHTML = '';
+  app.append(el('a', { className: 'back', href: '#/', textContent: '← Back to all books' }));
+
+  if (!book) {
+    app.append(el('p', { className: 'none', textContent: 'Book not found. Please go back and choose a book from the list.' }));
+    return;
+  }
+  document.title = book.title + ' – Book Library';
+
+  const cover = el('div', { className: 'cover', textContent: book.title });
+  cover.style.background = book.color;
+
+  const rows = [['Author', book.author], ['Year published', book.year],
+                ['Genre', book.genre], ['Pages (approx.)', book.pages]];
+  const table = el('table', {}, rows.map(function (r) {
+    return el('tr', {}, [el('th', { textContent: r[0] }), el('td', { textContent: r[1] })]);
+  }));
+
+  const info = el('div', {}, [
+    el('h2', { textContent: book.title }),
+    el('p', { className: 'by', textContent: 'by ' + book.author }),
+    el('p', { textContent: book.description }),
+    table
+  ]);
+  app.append(el('div', { className: 'detail' }, [cover, info]));
+  window.scrollTo(0, 0);
+}
+
+/* ---------- Simple router based on the URL hash ---------- */
+function route() {
+  const m = location.hash.match(/^#\/book\/(\d+)$/);
+  if (m) showBook(parseInt(m[1], 10));
+  else showHome();
+}
+window.addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>
